@@ -4,6 +4,7 @@ import psycopg
 import json
 import pprint
 import mplfinance as mpf
+import argparse
 
 from typing import List
 from matplotlib import pyplot as plt
@@ -38,7 +39,7 @@ def open_position(position_type, entry_price, entry_time):
         'deposit': deposit
     }
     open_positions.append(new_position)
-    print(f"Opened {position_type} position at {entry_price} on {entry_time} with deposit {deposit}")
+    #print(f"Opened {position_type} position at {entry_price} on {entry_time} with deposit {deposit}")
 
 def close_position(position, exit_price, exit_time):
     global available_asset, total_asset
@@ -63,7 +64,7 @@ def close_position(position, exit_price, exit_time):
     if pd.isna(exit_time):
         return
     trades.append(trade)
-    print(f"Closed {position['type']} position opened on {position['entry_time']} at {exit_price} on {exit_time} with profit {profit_vnd} VND, return {trade['profit_pct']*100:.2f}%")
+    #print(f"Closed {position['type']} position opened on {position['entry_time']} at {exit_price} on {exit_time} with profit {profit_vnd} VND, return {trade['profit_pct']*100:.2f}%")
 
 def close_all_positions(exit_price, exit_time):
     # Close each open position.
@@ -71,71 +72,79 @@ def close_all_positions(exit_price, exit_time):
         close_position(pos, exit_price, exit_time)
         open_positions.remove(pos)
         
-# Load df_list back from the JSON file
-with open('src/in-sample.json', 'r') as f:
-    df_list = json.load(f)
+# --- Main Script ---
+if __name__ == "__main__":
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Backtesting script with input JSON file.")
+    parser.add_argument("input_file", type=str, help="Path to the input JSON file (e.g., src/in-sample.json)")
+    parser.add_argument("--log", action="store_true", help="Log the trade details")
+    args = parser.parse_args()
 
-# Convert datetime strings back to pandas Timestamps
-for record in df_list:
-    record['datetime'] = pd.Timestamp(record['datetime'])
+    # Load df_list back from the JSON file
+    with open("src/" + args.input_file, 'r') as f:
+        df_list = json.load(f)
 
-# --- Backtesting Loop Using df_list ---
-n = len(df_list)
-for i in range(n):
-    current_candle = df_list[i]
-    current_time = current_candle['datetime']
-    
-    # --- Overnight Position Closing ---
-    if i > 0:
-        prev_time = df_list[i-1]['datetime']
-        if current_time.date() != prev_time.date():
-            # Close all open positions at the previous candle's close.
-            close_all_positions(df_list[i-1]['close'], prev_time)
-    
-    # --- Check Exit Conditions for Each Open Position ---
-    for pos in open_positions.copy():
-        if pos['type'] == 'long':
-            unrealized_points = current_candle['close'] - pos['entry_price']
-        else:
-            unrealized_points = pos['entry_price'] - current_candle['close']
-        # Exit if take profit (>= 3 points) or stop loss (<= -1 point) is reached.
-        if unrealized_points >= 3 or unrealized_points <= -1:
-            close_position(pos, current_candle['close'], current_time)
-            open_positions.remove(pos)
-    
-    # --- Check for Entry Signals ---
-    if i >= 3:
-        # Check if the previous 3 candles are consecutive (1 minute apart)
-        if ((current_time - df_list[i-1]['datetime'] == pd.Timedelta(minutes=1)) and
-            (df_list[i-1]['datetime'] - df_list[i-2]['datetime'] == pd.Timedelta(minutes=1)) and
-            (df_list[i-2]['datetime'] - df_list[i-3]['datetime'] == pd.Timedelta(minutes=1)) and
-            (current_candle['tickersymbol'] == df_list[i-1]['tickersymbol'] ==
-             df_list[i-2]['tickersymbol'] == df_list[i-3]['tickersymbol'])):
-            
-            # Get the previous three candles
-            prev_candles = df_list[i-3:i]
-            # Define patterns: bearish if close < open, bullish if close > open.
-            bearish_pattern = all(candle['close'] < candle['open'] for candle in prev_candles)
-            bullish_pattern = all(candle['close'] > candle['open'] for candle in prev_candles)
-            # Ensure SMA50 is available.
-            if np.isnan(current_candle['SMA50']):
-                continue
-            
-            # Entry Signal for LONG: previous 3 candles are bearish, previous candle’s high is below current candle’s close,
-            # and current candle’s close is above its SMA50.
-            if bearish_pattern and (df_list[i-1]['high'] < current_candle['close']) and (current_candle['SMA50'] < current_candle['close']):
-                open_position('long', current_candle['close'], current_time)
-            # Entry Signal for SHORT can be added similarly if desired.
-            if bullish_pattern and (df_list[i-1]['low'] > current_candle['close']) and (current_candle['SMA50'] > current_candle['close']):
-                open_position('short', current_candle['close'], current_time)
-    
-# --- End of Backtesting Loop ---
-if open_positions:
-    close_all_positions(df_list[-1]['close'], df_list[-1]['datetime'])
+    # Convert datetime strings back to pandas Timestamps
+    for record in df_list:
+        record['datetime'] = pd.Timestamp(record['datetime'])
+    # --- Backtesting Loop Using df_list ---
+    n = len(df_list)
+    for i in range(n):
+        current_candle = df_list[i]
+        current_time = current_candle['datetime']
+        
+        # --- Overnight Position Closing ---
+        if i > 0:
+            prev_time = df_list[i-1]['datetime']
+            if current_time.date() != prev_time.date():
+                # Close all open positions at the previous candle's close.
+                close_all_positions(df_list[i-1]['close'], prev_time)
+        
+        # --- Check Exit Conditions for Each Open Position ---
+        for pos in open_positions.copy():
+            if pos['type'] == 'long':
+                unrealized_points = current_candle['close'] - pos['entry_price']
+            else:
+                unrealized_points = pos['entry_price'] - current_candle['close']
+            # Exit if take profit (>= 3 points) or stop loss (<= -1 point) is reached.
+            if unrealized_points >= 3 or unrealized_points <= -1:
+                close_position(pos, current_candle['close'], current_time)
+                open_positions.remove(pos)
+        
+        # --- Check for Entry Signals ---
+        if i >= 3:
+            # Check if the previous 3 candles are consecutive (1 minute apart)
+            if ((current_time - df_list[i-1]['datetime'] == pd.Timedelta(minutes=1)) and
+                (df_list[i-1]['datetime'] - df_list[i-2]['datetime'] == pd.Timedelta(minutes=1)) and
+                (df_list[i-2]['datetime'] - df_list[i-3]['datetime'] == pd.Timedelta(minutes=1)) and
+                (current_candle['tickersymbol'] == df_list[i-1]['tickersymbol'] ==
+                df_list[i-2]['tickersymbol'] == df_list[i-3]['tickersymbol'])):
+                
+                # Get the previous three candles
+                prev_candles = df_list[i-3:i]
+                # Define patterns: bearish if close < open, bullish if close > open.
+                bearish_pattern = all(candle['close'] < candle['open'] for candle in prev_candles)
+                bullish_pattern = all(candle['close'] > candle['open'] for candle in prev_candles)
+                # Ensure SMA50 is available.
+                if np.isnan(current_candle['SMA50']):
+                    continue
+                
+                # Entry Signal for LONG: previous 3 candles are bearish, previous candle’s high is below current candle’s close,
+                # and current candle’s close is above its SMA50.
+                if bearish_pattern and (df_list[i-1]['high'] < current_candle['close']) and (current_candle['SMA50'] < current_candle['close']):
+                    open_position('long', current_candle['close'], current_time)
+                # Entry Signal for SHORT can be added similarly if desired.
+                if bullish_pattern and (df_list[i-1]['low'] > current_candle['close']) and (current_candle['SMA50'] > current_candle['close']):
+                    open_position('short', current_candle['close'], current_time)
+        
+    # --- End of Backtesting Loop ---
+    if open_positions:
+        close_all_positions(df_list[-1]['close'], df_list[-1]['datetime'])
 
-# --- Trade Summary ---
-trades_df = pd.DataFrame(trades)
-print("\nBacktesting completed. Trade summary:")
-print(trades_df)
-total_profit = trades_df['profit_vnd'].sum() if not trades_df.empty else 0
-print(f"Total Profit: {total_profit} VND")
+    # --- Trade Summary ---
+    trades_df = pd.DataFrame(trades)
+    print("\nBacktesting completed. Trade summary:")
+    if args.log:
+        print(trades_df)
+    total_profit = trades_df['profit_vnd'].sum() if not trades_df.empty else 0
+    print(f"Total Profit: {total_profit} VND")
