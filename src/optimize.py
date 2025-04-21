@@ -24,12 +24,12 @@ SL_MIN, SL_MAX = -5.0, -0.5             # Stop-loss range (negative values)
 TIMEFRAME_MIN, TIMEFRAME_MAX = 1, 20  # Time frame range in minutes (inclusive)
 
 # Configuration: number of random combinations to try
-NUM_COMBINATIONS = 10000
+NUM_COMBINATIONS = 1000
 
 best_profit = float("-inf")
 best_params = None
 
-for _ in range(NUM_COMBINATIONS):
+for time in range(NUM_COMBINATIONS):
     # Randomly sample a combination of parameters
     sma_window = random.randint(SMA_MIN, SMA_MAX)
     take_profit = round(random.uniform(TP_MIN, TP_MAX), 2)
@@ -62,7 +62,7 @@ for _ in range(NUM_COMBINATIONS):
         print(f"Error: data_processing.py failed for params {params} (skipping).")
         print(e.stderr)  # Print the error message for debugging
         continue
-    print("Data processing completed successfully.")
+    #print("Data processing completed successfully.")
     # Run backtest.py on the in-sample data to evaluate performance
     try:
         result = subprocess.run(
@@ -95,7 +95,7 @@ for _ in range(NUM_COMBINATIONS):
                 trades = int(trades_str)
             except ValueError:
                 trades = 0
-    print(f"Tested params {params} => Total Profit: {total_profit} VND, "
+    print(f"Set {time}: Tested params {params} => Total Profit: {total_profit} VND, "
         f"Total Trades: {trades}")
     with open("src/optimization_results.txt", "a") as log_f:
         log_f.write(
