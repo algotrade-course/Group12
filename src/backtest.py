@@ -74,6 +74,12 @@ def close_all_positions(exit_price, exit_time):
         
 # --- Main Script ---
 if __name__ == "__main__":
+    with open('src/params.json', 'r') as pf:
+        params = json.load(pf)
+    take_profit = params.get('take_profit', 3)   # default 3 points if not specified
+    stop_loss = params.get('stop_loss', -1)
+    time_frame = params.get('time_frame', 1)  # default 1 minute if not present
+    time_step = pd.Timedelta(minutes=time_frame)
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Backtesting script with input JSON file.")
     parser.add_argument("input_file", type=str, help="Path to the input JSON file (e.g., src/in-sample.json)")
@@ -107,34 +113,33 @@ if __name__ == "__main__":
             else:
                 unrealized_points = pos['entry_price'] - current_candle['close']
             # Exit if take profit (>= 3 points) or stop loss (<= -1 point) is reached.
-            if unrealized_points >= 3 or unrealized_points <= -1:
+            if unrealized_points >= take_profit or unrealized_points <= stop_loss:
                 close_position(pos, current_candle['close'], current_time)
                 open_positions.remove(pos)
         
         # --- Check for Entry Signals ---
         if i >= 3:
-            # Check if the previous 3 candles are consecutive (1 minute apart)
-            if ((current_time - df_list[i-1]['datetime'] == pd.Timedelta(minutes=1)) and
-                (df_list[i-1]['datetime'] - df_list[i-2]['datetime'] == pd.Timedelta(minutes=1)) and
-                (df_list[i-2]['datetime'] - df_list[i-3]['datetime'] == pd.Timedelta(minutes=1)) and
+            # Check if the previous 3 candles are consecutive (time_frame minute apart)
+            if ((current_time - df_list[i-1]['datetime'] == pd.Timedelta(minutes=time_frame)) and
+                (df_list[i-1]['datetime'] - df_list[i-2]['datetime'] == pd.Timedelta(minutes=time_frame)) and
+                (df_list[i-2]['datetime'] - df_list[i-3]['datetime'] == pd.Timedelta(minutes=time_frame)) and
                 (current_candle['tickersymbol'] == df_list[i-1]['tickersymbol'] ==
                 df_list[i-2]['tickersymbol'] == df_list[i-3]['tickersymbol'])):
-                
                 # Get the previous three candles
                 prev_candles = df_list[i-3:i]
                 # Define patterns: bearish if close < open, bullish if close > open.
                 bearish_pattern = all(candle['close'] < candle['open'] for candle in prev_candles)
                 bullish_pattern = all(candle['close'] > candle['open'] for candle in prev_candles)
-                # Ensure SMA50 is available.
-                if np.isnan(current_candle['SMA50']):
+                # Ensure SMA is available.
+                if np.isnan(current_candle['SMA']):
                     continue
                 
                 # Entry Signal for LONG: previous 3 candles are bearish, previous candle’s high is below current candle’s close,
-                # and current candle’s close is above its SMA50.
-                if bearish_pattern and (df_list[i-1]['high'] < current_candle['close']) and (current_candle['SMA50'] < current_candle['close']):
+                # and current candle’s close is above its SMA.
+                if bearish_pattern and (df_list[i-1]['high'] < current_candle['close']) and (current_candle['SMA'] < current_candle['close']):
                     open_position('long', current_candle['close'], current_time)
                 # Entry Signal for SHORT can be added similarly if desired.
-                if bullish_pattern and (df_list[i-1]['low'] > current_candle['close']) and (current_candle['SMA50'] > current_candle['close']):
+                if bullish_pattern and (df_list[i-1]['low'] > current_candle['close']) and (current_candle['SMA'] > current_candle['close']):
                     open_position('short', current_candle['close'], current_time)
         
     # --- End of Backtesting Loop ---
@@ -146,5 +151,7 @@ if __name__ == "__main__":
     print("\nBacktesting completed. Trade summary:")
     if args.log:
         print(trades_df)
+    trades_df.to_pickle("src/trades.pkl")
     total_profit = trades_df['profit_vnd'].sum() if not trades_df.empty else 0
-    print(f"Total Profit: {total_profit} VND")
+    print(f"Total Trades: {len(trades)}")
+    print(f"Total Profit: {total_profit}")

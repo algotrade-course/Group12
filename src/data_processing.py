@@ -13,7 +13,10 @@ import matplotlib.pyplot as plt
 
 df = pd.read_csv('src/ticks.csv', parse_dates=['datetime'])
 dataset = list(df.itertuples(index=False, name=None))
-
+with open('src/params.json', 'r') as pf:
+    params = json.load(pf)
+time_frame = params.get('time_frame', 1)            # default to 1 minute if not set
+resample_interval = f'{time_frame}T'  
 # Devide data into in-sample and out-sample
 in_sample_dataset = dataset[:int(len(dataset)*0.7)]
 out_sample_dataset = dataset[int(len(dataset)*0.3):]
@@ -40,19 +43,19 @@ in_sample_candle.drop(columns='ticker_month', inplace=True)
 in_sample_candle.sort_index(inplace=True)
 
 # Resample dữ liệu theo khung 1 giờ (1h)
-in_sample_candle_ohlc = in_sample_candle['price'].resample('1T').ohlc()
+in_sample_candle_ohlc = in_sample_candle['price'].resample(resample_interval).ohlc()
 in_sample_candle_ohlc = (
     in_sample_candle
     .groupby('tickersymbol')
-    .resample('1T')['price']
+    .resample(resample_interval)['price']
     .ohlc()
     .reset_index()
 )
 in_sample_candle_ohlc.set_index('datetime', inplace=True)
 
 # Vẽ biểu đồ nến
-mpf.plot(in_sample_candle_ohlc[50:200], type='candle', style='charles',
-        title=" In sample data VN30F2311 Candlestick Chart (1m)", ylabel="Price")
+#mpf.plot(in_sample_candle_ohlc[50:200], type='candle', style='charles',
+      #  title=" In sample data VN30F2311 Candlestick Chart (1m)", ylabel="Price")
 
 # Chuyển dữ liệu sang DataFrame của out_sample_data
 out_sample_candle = pd.DataFrame(out_sample_dataset, columns=['datetime', 'tickersymbol', 'price'])
@@ -73,24 +76,27 @@ out_sample_candle.drop(columns='ticker_month', inplace=True)
 out_sample_candle.sort_index(inplace=True)
 
 # Resample dữ liệu theo khung 1 giờ (1h)
-out_sample_candle_ohlc = out_sample_candle['price'].resample('1T').ohlc()
+out_sample_candle_ohlc = out_sample_candle['price'].resample(resample_interval).ohlc()
 out_sample_candle_ohlc = (
     out_sample_candle
     .groupby('tickersymbol')
-    .resample('1T')['price']
+    .resample(resample_interval)['price']
     .ohlc()
     .reset_index()
 )
 out_sample_candle_ohlc.set_index('datetime', inplace=True)
 
 # Vẽ biểu đồ nến
-mpf.plot(out_sample_candle_ohlc[50:200], type='candle', style='charles',
-        title=" Out sample data VN30F2311 Candlestick Chart (1m)", ylabel="Price")
+#mpf.plot(out_sample_candle_ohlc[50:200], type='candle', style='charles',
+       # title=" Out sample data VN30F2311 Candlestick Chart (1m)", ylabel="Price")
 
 # --- Prepare Data ---
+with open('src/params.json', 'r') as pf:
+    params = json.load(pf)
+sma_window = params.get('sma_window', 50)
 # Assume in_sample_candle_ohlc is a DataFrame with a DateTimeIndex.
 df = in_sample_candle_ohlc.copy()
-df['SMA50'] = df['close'].rolling(window=50, min_periods=50).mean()
+df['SMA'] = df['close'].rolling(window=sma_window, min_periods=sma_window).mean()
 
 # Reset the index so that the datetime becomes a column.
 df.reset_index(inplace=True)
@@ -103,7 +109,7 @@ with open('src/in-sample.json', 'w') as f:
     json.dump(df_list, f, default=str, indent=4)
 
 df = out_sample_candle_ohlc.copy()
-df['SMA50'] = df['close'].rolling(window=50, min_periods=50).mean()
+df['SMA'] = df['close'].rolling(window=sma_window, min_periods=sma_window).mean()
 # Reset the index so that the datetime becomes a column.
 df.reset_index(inplace=True)
 df.rename(columns={'index': 'datetime'}, inplace=True)
