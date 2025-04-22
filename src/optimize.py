@@ -95,12 +95,35 @@ for time in range(NUM_COMBINATIONS):
                 trades = int(trades_str)
             except ValueError:
                 trades = 0
+    # Run data_processing.py to generate in-sample and out-sample JSON files
+    try:
+        result = subprocess.run(
+            ["python", "src/evaluate.py"], 
+            check=True, capture_output=True, text=True
+        )
+    except subprocess.CalledProcessError as e:
+        # Handle errors gracefully: print error and skip this combination
+        print(f"Error: evaluate.py failed for params {params} (skipping).")
+        print(e.stderr)  # Print the error message for debugging
+        continue
+    output_text = result.stdout
+    sharpe = 0.0
+    for line in output_text.splitlines():
+        if "Daily-based Sharpe Ratio:" in line:
+            # Expected format: "Daily-based Sharpe Ratio: X"
+            try:
+                profit_str = line.split("Daily-based Sharpe Ratio:")[1].strip()
+                # Remove the currency and commas, convert to float
+                profit_value = profit_str.strip().replace(",", "")
+                sharpe = float(profit_value)
+            except ValueError:
+                sharpe = 0.0
     print(f"Set {time}: Tested params {params} => Total Profit: {total_profit} VND, "
-        f"Total Trades: {trades}")
+        f"Total Trades: {trades} => Sharpe Ratio: {sharpe:.2f}")
     with open("src/optimization_results.txt", "a") as log_f:
         log_f.write(
             f"Tested params {params} => Total Profit: {total_profit} VND, "
-            f"Total Trades: {trades}\n"
+            f"Total Trades: {trades} => Sharpe Ratio: {sharpe:.2f}\n"
         )
     # Check if this combination is the best so far
     if total_profit > best_profit and trades > 10:
