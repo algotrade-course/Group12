@@ -17,6 +17,8 @@ with open('src/params.json', 'r') as pf:
     params = json.load(pf)
 time_frame = params.get('time_frame', 1)            # default to 1 minute if not set
 resample_interval = f'{time_frame}T'  
+# Sort dataset by ticker, then by datetime
+dataset.sort(key=lambda x: (x[1], x[0]))
 # Devide data into in-sample and out-sample
 in_sample_dataset = dataset[:int(len(dataset)*0.7)]
 out_sample_dataset = dataset[int(len(dataset)*0.7):]
