@@ -62,12 +62,12 @@ Algorithmic backtesting is essential for validating trading strategies under his
 python src/data_collecting.py
 ```
 This will get the tick data with the following query
-```
-SELECT m.datetime, m.tickersymbol, m.price 
-FROM "quote"."matched" m 
-WHERE m.tickersymbol LIKE 'VN30F23%' 
-and m.datetime \>= '2023-01-01 00:00:00'
-```
+        ```sql
+        SELECT datetime, tickersymbol, price
+        FROM "quote"."matched"
+        WHERE tickersymbol LIKE 'VN30F23%' 
+          AND datetime >= '2023-01-01 00:00:00';
+        ```
 The daily stock price results will be stored in the src/ticks.csv file. The data is stored with the following format:
 ```
 datetime                   tickersymbol   price
@@ -259,7 +259,7 @@ The initial results are as follow:
 
 ## Conclusion
 
-
+The initial backtest of the 3-candle reversal strategy with default parameters yielded negative returns on the VN30F230X futures contract. However, after optimizing the SMA window, time frame, take profit, and stop loss parameters using in-sample data, the strategy showed positive profitability (8.67% HPR, Sharpe Ratio 1.92). Validation on the out-of-sample data confirmed the strategy's potential, generating a positive HPR of 3.32% and a Sharpe Ratio of 1.45, albeit lower than in-sample results. This suggests the optimized strategy has some predictive value but may be sensitive to overfitting or changing market conditions. Further refinement or incorporation of additional filters could potentially improve robustness.
 
 
 
