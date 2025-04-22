@@ -134,6 +134,22 @@ datetime                   tickersymbol   price
 ![][image1]
 
 ### **Back Testing**
+
+#### Trading Rules
+The trading logic is built around simple price action patterns in conjunction with the SMA as a trend filter. The strategy identifies potential long entry signals when three consecutive bearish candles (i.e., close < open) are immediately followed by a breakout candle, whose close price exceeds both its SMA and the high of the preceding candle. Conversely, short entry signals are triggered under the inverse condition: three consecutive bullish candles followed by a breakdown below both the SMA and the prior candle’s low.
+
+Each trade is executed at the close price of the breakout candle. Once entered, positions are monitored at each subsequent time step for exit conditions:
+- Take Profit: the position is exited when unrealized profit reaches or exceeds a pre-specified number of index points, which is pre-defined in src/params.json.
+- Stop Loss: the position is force-closed when losses reach a threshold, which is pre-defined in src/params.json.
+All trades are assumed to be closed at the end of the trading session (i.e., if the trading date changes), simulating an intraday-only strategy and eliminating overnight risk.
+#### Position Sizing and Capital Constraints
+The strategy is capital-aware and incorporates realistic margin mechanics. A margin deposit is required for each trade, computed as:
+```
+Deposit = (Entry Price × Multiplier × Margin Ratio) ÷ Acceptable Risk (AR)
+```
+where the multiplier is set to 100,000 (reflecting the VN30F contract), and margin ratio and AR are fixed at 17.5% and 0.8 respectively. A trade is only executed if sufficient available capital is present. The model updates available and total capital dynamically, based on realized P&L, margin usage, and trading fees (0.47 index points per round trip).
+
+#### Run backtest
 After processing data, we can run the back testing with the following command:
 ```
 python src/backtest.py data_file_name
