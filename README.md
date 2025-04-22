@@ -131,7 +131,7 @@ datetime                   tickersymbol   price
 
 2023-01-03 08:53:38.830273	VN30F2301  1003.0
 ```
-![][image1]
+![](image1.png)
 
 ### **Back Testing**
 
@@ -185,7 +185,7 @@ The initial results are as follow:
 - Initial Capital: 100'000'000 VND
 - Final Capital: 84'299'000.00000012 VND
 - Total Profit: -15'700'999.999999883 VND
-- Asset Over Time: ![][image2]
+- Asset Over Time: ![](image2.png)
 - Holding Period Return (HPR): -15.70%
 - Maximum Drawdown (MDD): 15.76%
 - Daily-based Sharpe Ratio: -8.795042310274725
@@ -232,7 +232,7 @@ The results after optimizing are as follow:
 - Initial Capital: 100'000'000 VND
 - Final Capital: 108'672'000.0 VND
 - Total Profit: 8'672'000.000000002 VND
-- Asset Over Time: ![][image3]
+- Asset Over Time: ![](image3.png)
 - Holding Period Return (HPR): 8.67%
 - Maximum Drawdown (MDD): 2.29%
 - Daily-based Sharpe Ratio: 1.9230540998448737
@@ -252,7 +252,7 @@ The initial results are as follow:
 - Initial Capital: 100'000'000 VND
 - Final Capital: 103'324'000.00000007 VND
 - Total Profit: 3'324'000.000000073 VND
-- Asset Over Time: ![][image4]
+- Asset Over Time: ![](image4.png)
 - Holding Period Return (HPR): 3.32%
 - Maximum Drawdown (MDD): 1.36%
 - Daily-based Sharpe Ratio: 1.4503619250285522
