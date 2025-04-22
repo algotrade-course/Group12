@@ -5,11 +5,19 @@ import psycopg
 import json
 import pprint
 import mplfinance as mpf
+import argparse
 
 from typing import List
 # Set initial capital (must be consistent with your simulation)
 initial_capital = 100_000_000  # VND
-
+parser = argparse.ArgumentParser(
+    
+)
+parser.add_argument(
+    "--optimize",
+    action="store_true",
+    help="Optimizing, do NOT print the AOT"
+)
 # Convert trades into a DataFrame (assuming the list "trades" is already available)
 trades_df = pd.read_pickle("src/trades.pkl")
 
@@ -20,15 +28,20 @@ trades_df.sort_values(by="exit_time", inplace=True)
 trades_df["capital_over_time"] = initial_capital + trades_df["profit_vnd"].cumsum()
 trades_df["capital_over_time"] = trades_df["capital_over_time"].ffill()
 
-# Plot the asset curve (capital over time)
-plt.figure(figsize=(8, 4))
-plt.plot(trades_df["exit_time"], trades_df["capital_over_time"], label="Portfolio Value")
-plt.axhline(y=initial_capital, color="r", linestyle="--", label="Initial Capital")
-plt.title('Asset Over Time')
-plt.xlabel("Exit Time")
-plt.ylabel("Portfolio Value (VND)")
-plt.gca().spines[['top', 'right']].set_visible(False)
-plt.show()
+args = parser.parse_args()
+if args.optimize:
+    # If optimizing, do not plot the asset curve
+    pass
+else:
+    # Plot the asset curve (capital over time)
+    plt.figure(figsize=(8, 4))
+    plt.plot(trades_df["exit_time"], trades_df["capital_over_time"], label="Portfolio Value")
+    plt.axhline(y=initial_capital, color="r", linestyle="--", label="Initial Capital")
+    plt.title('Asset Over Time')
+    plt.xlabel("Exit Time")
+    plt.ylabel("Portfolio Value (VND)")
+    plt.gca().spines[['top', 'right']].set_visible(False)
+    plt.show()
 
 # Example initial capital matching your simulation
 initial_capital = 100_000_000
