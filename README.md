@@ -214,6 +214,7 @@ python src/optimize.py --seed 12345
 12345 is the random seed we used for generating parameters, you can specify another number.
 This process will take about 1-2 hours to finish on a standard laptop. We have already adjust the parameters to the most optimal set as we run the optimization in `src/params.json`.
 ### Optimization Result
+![](image5.png)
 After optimization, we put the best set of parameters to `src/params.json`.
 ```
 {
