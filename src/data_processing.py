@@ -5,6 +5,7 @@ import psycopg
 import json
 import pprint
 import mplfinance as mpf
+import argparse
 
 from typing import List
 from matplotlib import pyplot as plt
@@ -13,10 +14,20 @@ import matplotlib.pyplot as plt
 
 df = pd.read_csv('src/ticks.csv', parse_dates=['datetime'])
 dataset = list(df.itertuples(index=False, name=None))
-with open('src/params.json', 'r') as pf:
-    params = json.load(pf)
-time_frame = params.get('time_frame', 1)            # default to 1 minute if not set
-resample_interval = f'{time_frame}T'  
+parser = argparse.ArgumentParser(description='Flag for data processing')
+parser.add_argument('--params', action='store_true', help='Use external params')
+args = parser.parse_args()
+if args.params:
+    with open('src/params.json', 'r') as pf:
+        params = json.load(pf)
+    time_frame = params.get('time_frame', 1)            # default to 1 minute if not set
+    sma_window = params.get('sma_window', 50)
+    
+else:
+    time_frame = 1                                     # default to 1 minute if not set
+    sma_window = 50                                   # default to 50 if not set
+    
+resample_interval = f'{time_frame}min'  
 # Sort dataset by ticker, then by datetime
 dataset.sort(key=lambda x: (x[1], x[0]))
 # Devide data into in-sample and out-sample
@@ -93,9 +104,6 @@ out_sample_candle_ohlc.set_index('datetime', inplace=True)
        # title=" Out sample data VN30F2311 Candlestick Chart (1m)", ylabel="Price")
 
 # --- Prepare Data ---
-with open('src/params.json', 'r') as pf:
-    params = json.load(pf)
-sma_window = params.get('sma_window', 50)
 # Assume in_sample_candle_ohlc is a DataFrame with a DateTimeIndex.
 df = in_sample_candle_ohlc.copy()
 df['SMA'] = df['close'].rolling(window=sma_window, min_periods=sma_window).mean()

@@ -123,6 +123,8 @@ Run the following command for data processing pipeline:
 ```
 python src/data_processing.py
 ```
+An optional flag `--params` can be added for using the defined parameters in `src/params.json`. For now, we do not add this flag so that the program will run on the initial parameters.
+
 The data is stored with the following format:	
 ```
 datetime                   tickersymbol   price
@@ -162,7 +164,7 @@ The configurations for backtesting are also the ones for optimization, which are
 {
     "sma_window": 50,
     "take_profit": 3,
-    "stop_loss": 1,
+    "stop_loss": -1,
     "time_frame": 1
 }
 ```
@@ -176,6 +178,7 @@ Run the in-sample backtesting with the following command:
 ```
 python src/backtest.py in-sample.json
 ```
+An optional flag `--params` can be added for using the defined parameters in `src/params.json`. For now, we do not add this flag so that the program will run on the initial parameters.
 ### In-sample Backtesting Result
 To get the result, run the following command:
 ```
@@ -183,12 +186,12 @@ python src/evaluate.py
 ```
 The initial results are as follow:
 - Initial Capital: 100'000'000 VND
-- Final Capital: 84'299'000.00000012 VND
-- Total Profit: -15'700'999.999999883 VND
+- Final Capital: 80'192'999.99999996 VND
+- Total Profit: -19'807'000.000000045 VND
 - Asset Over Time: ![](image2.png)
-- Holding Period Return (HPR): -15.70%
-- Maximum Drawdown (MDD): 15.76%
-- Daily-based Sharpe Ratio: -8.795042310274725
+- Holding Period Return (HPR): -19.81%
+- Maximum Drawdown (MDD): 20.23%
+- Daily-based Sharpe Ratio: -4.951047135793618
 
 ## Optimization
 * **Description:** We will randomly generate different sets of parameters and run the data processing, backtesting, and evaluation sequentially. We will try to find the set that results in highest HPR.
@@ -197,7 +200,7 @@ The initial results are as follow:
 {
     "sma_window": 50,
     "take_profit": 3,
-    "stop_loss": 1,
+    "stop_loss": -1,
     "time_frame": 1
 }
 ```
@@ -212,6 +215,7 @@ Followings are the range for random generating:
 python src/optimize.py --seed 12345
 ```
 12345 is the random seed we used for generating parameters, you can specify another number.
+
 This process will take about 1-2 hours to finish on a standard laptop. We have already adjust the parameters to the most optimal set as we run the optimization in `src/params.json`.
 ### Optimization Result
 ![](image5.png)
@@ -224,10 +228,16 @@ After optimization, we put the best set of parameters to `src/params.json`.
     "time_frame": 3
 }
 ```
-After that, re-run the data processing and backtesting on in-sample data:
+After that, re-run the data processing and backtesting on in-sample data with the following 2 commands:
 ```
-python src/data_processing.py
-python src/backtest.py in-sample.json
+python src/data_processing.py --params
+python src/backtest.py in-sample.json --params
+```
+This time, we add the flag for the programs to run on the optimized parameters.
+
+To get the result, run the following command:
+```
+python src/evaluate.py
 ```
 The results after optimizing are as follow:
 - Initial Capital: 100'000'000 VND
@@ -242,8 +252,9 @@ The results after optimizing are as follow:
 * **Data:** Out-sample dataset (`out-sample.json`).
 Run the out-sample backtesting with the following command:
 ```
-python src/backtest.py out-sample.json
+python src/backtest.py out-sample.json --params
 ```
+We also add the flag here to run the out-sample backtesting on the optimized parameters.
 ### Out-sample Backtesting Result
 To get the result, run the following command:
 ```

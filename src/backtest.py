@@ -74,17 +74,23 @@ def close_all_positions(exit_price, exit_time):
         
 # --- Main Script ---
 if __name__ == "__main__":
-    with open('src/params.json', 'r') as pf:
-        params = json.load(pf)
-    take_profit = params.get('take_profit', 3)   # default 3 points if not specified
-    stop_loss = params.get('stop_loss', -1)
-    time_frame = params.get('time_frame', 1)  # default 1 minute if not present
-    time_step = pd.Timedelta(minutes=time_frame)
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Backtesting script with input JSON file.")
     parser.add_argument("input_file", type=str, help="Path to the input JSON file (e.g., src/in-sample.json)")
     parser.add_argument("--log", action="store_true", help="Log the trade details")
+    parser.add_argument("--params", action="store_true", help="Use external params")
     args = parser.parse_args()
+    if args.params:
+        with open('src/params.json', 'r') as pf:
+            params = json.load(pf)
+        take_profit = params.get('take_profit', 3)   # default 3 points if not specified
+        stop_loss = params.get('stop_loss', -1)
+        time_frame = params.get('time_frame', 1)  # default 1 minute if not present
+    else:
+        take_profit = 3
+        stop_loss = -1
+        time_frame = 1
+    time_step = pd.Timedelta(minutes=time_frame)
 
     # Load df_list back from the JSON file
     with open("src/" + args.input_file, 'r') as f:
