@@ -49,8 +49,6 @@ Algorithmic backtesting is essential for validating trading strategies under his
   pip install pandas
   pip install numpy
   pip install psycopg[binary]
-  pip install json
-  pip install pprint
   pip install mplfinance
 ```
 ### **Data Collection**
