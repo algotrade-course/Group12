@@ -24,7 +24,7 @@ SL_MIN, SL_MAX = -5.0, -0.5             # Stop-loss range (negative values)
 TIMEFRAME_MIN, TIMEFRAME_MAX = 1, 20  # Time frame range in minutes (inclusive)
 
 # Configuration: number of random combinations to try
-NUM_COMBINATIONS = 1000
+NUM_COMBINATIONS = 500
 
 best_profit = float("-inf")
 best_params = None
@@ -98,7 +98,7 @@ for time in range(NUM_COMBINATIONS):
     # Run data_processing.py to generate in-sample and out-sample JSON files
     try:
         result = subprocess.run(
-            ["python", "src/evaluate.py"], 
+            ["python", "src/evaluate.py", "--optimize"], 
             check=True, capture_output=True, text=True
         )
     except subprocess.CalledProcessError as e:
@@ -133,7 +133,7 @@ for time in range(NUM_COMBINATIONS):
 
 # After testing all combinations, save the best parameters and output the result
 if best_params is not None:
-    with open("params.json", "w") as f:
+    with open("src/params.json", "w") as f:
         json.dump(best_params, f, indent=4)
     print(f"Best parameters: SMA window = {best_params['sma_window']}, "
         f"Take-Profit = {best_params['take_profit']}, "
