@@ -217,7 +217,7 @@ python src/optimize.py --seed 12345
 This process will take about 1-2 hours to finish on a standard laptop. We have already adjust the parameters to the most optimal set as we run the optimization in `src/params.json`.
 ### Optimization Result
 ![](image5.png)
-After optimization, we put the best set of parameters to `src/params.json`.
+After optimization, we put the best set of parameters to `src/params.json`. If you accidentally run the optimization but do not want to wait, you can safely stop it and pass the following contents to `src/params.json` for running on the optimal parameters.
 ```
 {
     "sma_window": 33,
