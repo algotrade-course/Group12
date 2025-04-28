@@ -1,3 +1,5 @@
+![Static Badge](https://img.shields.io/badge/PLUTUS-75%25-darkgreen)
+
 # CS408 Computation Finance Project Report
 
 ## Abstract
